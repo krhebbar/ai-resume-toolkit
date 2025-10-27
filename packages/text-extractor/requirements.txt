@@ -1,0 +1,10 @@
+# Core PDF processing
+pdfminer.six>=20221105
+pypdf>=3.17.0
+PyMuPDF>=1.23.6
+
+# DOCX processing
+docx2txt>=0.8
+
+# Common dependencies
+requests>=2.31.0

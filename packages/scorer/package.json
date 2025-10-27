@@ -1,0 +1,54 @@
+{
+  "name": "@ai-resume-toolkit/scorer",
+  "version": "1.0.0",
+  "description": "Sophisticated resume-job fit scoring with logarithmic scaling and diminishing returns",
+  "author": "Ravindra Kanchikare (krhebber)",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krhebber/ai-resume-toolkit.git",
+    "directory": "packages/scorer"
+  },
+  "homepage": "https://github.com/krhebber/ai-resume-toolkit/tree/main/packages/scorer#readme",
+  "bugs": {
+    "url": "https://github.com/krhebber/ai-resume-toolkit/issues"
+  },
+  "keywords": [
+    "resume",
+    "scoring",
+    "algorithms",
+    "ranking",
+    "ats",
+    "recruiting",
+    "hiring",
+    "logarithmic",
+    "machine-learning",
+    "candidate-matching"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "ai-resume-toolkit",
+  "version": "1.0.0",
+  "description": "Complete, production-grade toolkit for AI-powered resume processing and candidate matching",
+  "author": "Ravindra Kanchikare (krhebber)",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "type-check": "npm run type-check --workspaces --if-present"
+  },
+  "keywords": [
+    "resume",
+    "parser",
+    "ats",
+    "llm",
+    "ai",
+    "recruiting",
+    "hiring",
+    "candidate-matching",
+    "pdf-extraction",
+    "openai",
+    "anthropic",
+    "scoring-algorithm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krhebber/ai-resume-toolkit.git"
+  },
+  "homepage": "https://github.com/krhebber/ai-resume-toolkit#readme",
+  "bugs": {
+    "url": "https://github.com/krhebber/ai-resume-toolkit/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "name": "@ai-resume-toolkit/json-parser",
+  "version": "1.0.0",
+  "description": "LLM-based structured data extraction from resumes and job descriptions",
+  "author": "Ravindra Kanchikare (krhebber)",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krhebber/ai-resume-toolkit.git",
+    "directory": "packages/json-parser"
+  },
+  "homepage": "https://github.com/krhebber/ai-resume-toolkit/tree/main/packages/json-parser#readme",
+  "bugs": {
+    "url": "https://github.com/krhebber/ai-resume-toolkit/issues"
+  },
+  "keywords": [
+    "resume",
+    "parser",
+    "llm",
+    "ai",
+    "openai",
+    "anthropic",
+    "json",
+    "structured-data",
+    "zod",
+    "job-description"
+  ],
+  "dependencies": {
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.22.4"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "openai": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": {
+      "optional": true
+    },
+    "openai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@types/node": "^20.11.0",
+    "openai": "^4.67.3",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  }
+}
