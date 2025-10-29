@@ -88,11 +88,7 @@ export class ResumeScorer {
    * console.log(result.scores.experience); // 91
    * ```
    */
-  score(scoredData: {
-    education: ScoredElement[];
-    experience: ScoredElement[];
-    skills: SkillsScore;
-  }): ScoringResult {
+  score(scoredData: ScorableData): ScoringResult {
     // Calculate scores for each category
     const educationScore = getScore(
       scoredData.education,
@@ -205,11 +201,7 @@ export class ResumeScorer {
  * console.log(result.totalScore);
  * ```
  */
-export function scoreResume(scoredData: {
-  education: ScoredElement[];
-  experience: ScoredElement[];
-  skills: SkillsScore;
-}): ScoringResult {
+export function scoreResume(scoredData: ScorableData): ScoringResult {
   const scorer = new ResumeScorer();
   return scorer.score(scoredData);
 }

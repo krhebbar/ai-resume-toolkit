@@ -56,6 +56,12 @@ Convenience function for simple text extraction.
 
 **Returns:** `ExtractionResult`
 
+**Raises:**
+- `PDFExtractionError`: If PDF parsing fails with all strategies.
+- `DOCXExtractionError`: If DOCX parsing fails.
+- `TextExtractionError`: If text file parsing fails.
+- `ImageConversionError`: If PDF to image conversion fails.
+
 ### `ResumeExtractor`
 
 Main extraction class for advanced usage.

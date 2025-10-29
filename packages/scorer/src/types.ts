@@ -85,6 +85,15 @@ export interface CategoryBreakdown<T> {
 }
 
 /**
+ * Input data for the scoring process, typically rated by an LLM.
+ */
+export interface ScorableData {
+  education: ScoredElement[];
+  experience: ScoredElement[];
+  skills: SkillsScore;
+}
+
+/**
  * Resume data for scoring
  */
 export interface ResumeForScoring {

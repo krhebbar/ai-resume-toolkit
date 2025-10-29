@@ -15,30 +15,15 @@
 import { Rating, ScoredElement, SkillsScore } from "./types";
 
 /**
- * Calculate logarithmic score for non-linear scaling
+ * Calculate logarithmic score for non-linear scaling.
+ * This function implements the principle of diminishing returns for quality.
+ * The impact of increasing a score is greater at lower values than at higher values.
+ * For example, improving from a score of 10 to 20 is more significant than improving from 90 to 100.
  *
- * Formula: 100 × (log(score) / log(100))
- *
- * This provides diminishing returns on higher scores:
- * - 0 → 0
- * - 10 → 50
- * - 50 → 84.9
- * - 100 → 100
- *
- * Rationale: Moving from 0→10 is more impactful than 90→100
- *
- * Time Complexity: O(1)
- * Space Complexity: O(1)
+ * Formula: 100 * (log(score) / log(100))
  *
  * @param score - Raw score (0-100)
  * @returns Logarithmically scaled score (0-100)
- *
- * @example
- * ```typescript
- * getLogarithmicScore(10)  // 50
- * getLogarithmicScore(50)  // 84.9
- * getLogarithmicScore(100) // 100
- * ```
  */
 export function getLogarithmicScore(score: number): number {
   // Handle edge case: log(0) is undefined
@@ -46,74 +31,38 @@ export function getLogarithmicScore(score: number): number {
     score = 1;
   }
 
-  // Formula: 100 * (log(score) / log(100))
-  // log(100) = 2 (in base 10), so this is 100 * (log(score) / 2)
+  // The formula scales the score on a logarithmic curve, with 100 as the maximum.
+  // The base of the logarithm does not matter as long as it is consistent.
   return 100 * (Math.log(score) / Math.log(100));
 }
 
 /**
- * Calculate capped factor for diminishing returns on quantity
+ * Calculate capped factor for diminishing returns on quantity.
+ * This function ensures that the number of items (e.g., skills, experiences)
+ * has diminishing returns, preventing "keyword stuffing".
  *
  * Formula: 1 - rFactor^count
  *
- * This provides diminishing returns as count increases:
- * - More items provide less marginal benefit
- * - Prevents gaming the system by adding many low-quality items
- *
- * With rFactor=0.25:
- * - count=1 → 0.75
- * - count=2 → 0.9375
- * - count=3 → 0.984
- * - count=5 → 0.999
- *
- * Time Complexity: O(1)
- * Space Complexity: O(1)
- *
  * @param count - Number of elements
- * @param rFactor - Reduction factor (0-1). Lower = more diminishing returns
+ * @param rFactor - Reduction factor (0-1). Lower values mean more aggressive diminishing returns.
  * @returns Capping factor (0-1)
- *
- * @example
- * ```typescript
- * getCappedFactor(1, 0.25)  // 0.75
- * getCappedFactor(2, 0.25)  // 0.9375
- * getCappedFactor(5, 0.25)  // 0.999
- * ```
  */
 export function getCappedFactor(count: number, rFactor: number): number {
-  // Formula: 1 - rFactor^count
-  // As count increases, rFactor^count approaches 0, so result approaches 1
+  // As count increases, rFactor^count approaches 0, so the result approaches 1.
+  // This means that each additional item provides a smaller marginal benefit.
   return 1 - Math.pow(rFactor, count);
 }
 
 /**
- * Calculate final score combining logarithmic scaling and capped factor
+ * Calculate final score combining logarithmic scaling and capped factor.
+ * This function combines the principles of diminishing returns for both quality and quantity.
  *
- * Formula: CappedFactor(count, rFactor) × LogarithmicScore(score)
- *
- * This combines:
- * 1. Logarithmic scaling on the average score (diminishing returns on quality)
- * 2. Capped factor on count (diminishing returns on quantity)
- *
- * Design Rationale:
- * - Quality matters more than quantity
- * - Having 10 mediocre skills < having 3 excellent skills
- * - Prevents resume stuffing with irrelevant keywords
- *
- * Time Complexity: O(1)
- * Space Complexity: O(1)
+ * Formula: CappedFactor(count, rFactor) * LogarithmicScore(score)
  *
  * @param score - Average raw score (0-100)
  * @param count - Number of elements
  * @param rFactor - Reduction factor (default: 0.25)
  * @returns Final score (0-100)
- *
- * @example
- * ```typescript
- * // 3 high-quality skills (avg 80) scores higher than 10 medium skills (avg 50)
- * getFinalScore(80, 3, 0.25)  // 91.7
- * getFinalScore(50, 10, 0.25) // 84.9
- * ```
  */
 export function getFinalScore(
   score: number,
@@ -127,12 +76,7 @@ export function getFinalScore(
 }
 
 /**
- * Convert rating enum to numeric score
- *
- * Mapping:
- * - "low" → 0
- * - "medium" → 50
- * - "high" → 100
+ * Convert rating enum to numeric score.
  *
  * @param rating - Rating enum value
  * @returns Numeric score (0, 50, or 100)
@@ -151,30 +95,11 @@ export function ratingToScore(rating: Rating): number {
 }
 
 /**
- * Calculate score from an array of rated elements
- *
- * Algorithm:
- * 1. Convert each rating to numeric score (low=0, medium=50, high=100)
- * 2. Calculate average score
- * 3. Apply final score formula with logarithmic scaling and capped factor
- *
- * Time Complexity: O(n) where n = number of elements
- * Space Complexity: O(1)
+ * Calculate score from an array of rated elements.
  *
  * @param elements - Array of scored elements with ratings
  * @param rFactor - Reduction factor for diminishing returns
  * @returns Final score (0-100)
- *
- * @example
- * ```typescript
- * const experience = [
- *   { rating: 'high', reason: 'Senior role at FAANG' },
- *   { rating: 'high', reason: '5+ years relevant experience' },
- *   { rating: 'medium', reason: 'Some gaps in required tech' },
- * ];
- *
- * getScore(experience); // ~91.7
- * ```
  */
 export function getScore(
   elements: ScoredElement[],
@@ -198,28 +123,11 @@ export function getScore(
 }
 
 /**
- * Calculate score from skills object (skill name → rating)
- *
- * Same algorithm as getScore() but for object-based skills data.
- *
- * Time Complexity: O(n) where n = number of skills
- * Space Complexity: O(n) for Object.values()
+ * Calculate score from skills object (skill name → rating).
  *
  * @param skills - Object mapping skill names to ratings
  * @param rFactor - Reduction factor for diminishing returns
  * @returns Final score (0-100)
- *
- * @example
- * ```typescript
- * const skills = {
- *   'TypeScript': 'high',
- *   'React': 'high',
- *   'Node.js': 'medium',
- *   'Python': 'low',
- * };
- *
- * getSkillScore(skills); // ~73.2
- * ```
  */
 export function getSkillScore(
   skills: SkillsScore,
@@ -248,31 +156,11 @@ export function getSkillScore(
 }
 
 /**
- * Calculate weighted total score from category scores
- *
- * Default weights:
- * - Experience: 45%
- * - Skills: 30%
- * - Education: 25%
+ * Calculate weighted total score from category scores.
  *
  * @param categoryScores - Scores for each category
  * @param weights - Custom weights (must sum to 1.0)
  * @returns Weighted total score (0-100)
- *
- * @example
- * ```typescript
- * const scores = {
- *   education: 80,
- *   experience: 90,
- *   skills: 85,
- * };
- *
- * // With default weights
- * getWeightedScore(scores); // 86.25
- *
- * // With custom weights
- * getWeightedScore(scores, { education: 0.2, experience: 0.5, skills: 0.3 }); // 86.5
- * ```
  */
 export function getWeightedScore(
   categoryScores: {

@@ -10,13 +10,35 @@ License: MIT
 
 import docx2txt
 from pdfminer.high_level import extract_text
+from pdfminer.pdfparser import PDFSyntaxError
 from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 import re
 import base64
 import fitz  # PyMuPDF
 from typing import Dict, Optional, List, Union
 from io import BytesIO
+import zipfile
 
+class ExtractionError(Exception):
+    """Base class for extraction errors."""
+    pass
+
+class PDFExtractionError(ExtractionError):
+    """Raised when PDF text extraction fails."""
+    pass
+
+class DOCXExtractionError(ExtractionError):
+    """Raised when DOCX text extraction fails."""
+    pass
+
+class TextExtractionError(ExtractionError):
+    """Raised when plain text extraction fails."""
+    pass
+
+class ImageConversionError(ExtractionError):
+    """Raised when PDF to image conversion fails."""
+    pass
 
 class SupportedFormats:
     """Enum-like class for supported file formats"""
@@ -110,7 +132,7 @@ class ResumeExtractor:
         Extract text from resume file using format-specific strategies.
 
         Returns:
-            ExtractionResult containing text, images (for OCR), or failure status
+            ExtractionResult containing text, images, or failure status
         """
         if self.format == SupportedFormats.PDF:
             return self._extract_pdf()
@@ -137,30 +159,36 @@ class ResumeExtractor:
         images = None
 
         try:
-            # Tier 1: Try pdfminer.six (best for structured text extraction)
+            # Tier 1: Try pdfminer.six
             text = clean_text(extract_text(self.file))
+        except PDFSyntaxError as e:
+            print(f"pdfminer.six failed: {e}. Falling back to pypdf.")
+        except Exception as e:
+            print(f"An unexpected error occurred with pdfminer.six: {e}. Falling back to pypdf.")
 
+        try:
             # Tier 2: Fallback to pypdf if pdfminer returns empty
             if not text or text.strip() == '':
+                if hasattr(self.file, 'seek'):
+                    self.file.seek(0)
                 pdf_reader = PdfReader(self.file)
-                page_texts = []
-
-                for page in pdf_reader.pages:
-                    page_texts.append(page.extract_text())
-
+                page_texts = [p.extract_text() for p in pdf_reader.pages]
                 text = " ".join(page_texts)
+        except PdfReadError as e:
+            raise PDFExtractionError(f"pypdf failed to read PDF: {e}") from e
+        except Exception as e:
+            raise PDFExtractionError(f"An unexpected error occurred with pypdf: {e}") from e
 
+        try:
             # Tier 3: If still minimal text, assume image-based PDF
             if not text or len(text.strip()) < self.min_text_threshold:
                 print(f'Text extraction yielded {len(text) if text else 0} chars. Extracting images for OCR.')
                 images = self._pdf_to_images()
-
+                text = None # Clear text if we are returning images
         except Exception as e:
-            print(f'PDF extraction error: {e}')
-            raise Exception('PDF file parsing failed')
+            raise ImageConversionError(f"Failed to convert PDF to images: {e}") from e
 
-        # Return appropriate result
-        if images is not None and len(images) > 0:
+        if images:
             return ExtractionResult(images=images)
         elif text and text.strip():
             return ExtractionResult(text=text)
@@ -176,15 +204,14 @@ class ResumeExtractor:
         """
         try:
             text = clean_text(docx2txt.process(self.file))
-
             if text and text.strip():
                 return ExtractionResult(text=text)
             else:
                 return ExtractionResult(failed=True)
-
+        except zipfile.BadZipFile as e:
+            raise DOCXExtractionError(f"Invalid DOCX file: {e}") from e
         except Exception as e:
-            print(f'DOCX extraction error: {e}')
-            raise Exception('DOCX file parsing failed')
+            raise DOCXExtractionError(f"Failed to extract text from DOCX: {e}") from e
 
     def _extract_text(self) -> ExtractionResult:
         """
@@ -198,16 +225,20 @@ class ResumeExtractor:
                 with open(self.file, 'r', encoding='utf-8') as f:
                     text = clean_text(f.read())
             else:
+                if hasattr(self.file, 'seek'):
+                    self.file.seek(0)
                 text = clean_text(self.file.read().decode('utf-8'))
 
             if text and text.strip():
                 return ExtractionResult(text=text)
             else:
                 return ExtractionResult(failed=True)
-
+        except FileNotFoundError as e:
+            raise TextExtractionError(f"Text file not found: {self.file}") from e
+        except UnicodeDecodeError as e:
+            raise TextExtractionError(f"Failed to decode text file with UTF-8: {e}") from e
         except Exception as e:
-            print(f'Text extraction error: {e}')
-            raise Exception('Text file parsing failed')
+            raise TextExtractionError(f"Failed to read text file: {e}") from e
 
     def _pdf_to_images(self) -> List[str]:
         """
@@ -221,6 +252,8 @@ class ResumeExtractor:
             List of base64-encoded image strings
         """
         try:
+            if hasattr(self.file, 'seek'):
+                self.file.seek(0)
             pdf_doc = fitz.open(stream=self.file, filetype="pdf")
             image_data_list = []
 
@@ -228,22 +261,17 @@ class ResumeExtractor:
                 page = pdf_doc[page_index]
                 image_list = page.get_images()
 
-                # If page has no embedded images, render entire page
-                if len(image_list) < 1:
+                if not image_list:
                     image_data_list.append(self._page_to_image(page))
                 else:
-                    # Extract embedded images
                     for img in image_list:
                         xref = img[0]
                         base_image = pdf_doc.extract_image(xref)
                         image_bytes = base_image["image"]
                         image_data_list.append(base64.b64encode(image_bytes).decode('utf-8'))
-
             return image_data_list
-
         except Exception as e:
-            print(f'PDF to image conversion error: {e}')
-            raise Exception('PDF to image conversion failed')
+            raise ImageConversionError(f"PyMuPDF failed to process PDF for image extraction: {e}") from e
 
     def _page_to_image(self, page) -> str:
         """
@@ -256,18 +284,13 @@ class ResumeExtractor:
             Base64-encoded image string
         """
         try:
-            # 2x zoom for better OCR quality
             zoom = 2
             mat = fitz.Matrix(zoom, zoom)
             pix_bytes = page.get_pixmap(matrix=mat).tobytes()
             return base64.b64encode(pix_bytes).decode('utf-8')
-
         except Exception as e:
-            print(f'Page to image conversion error: {e}')
-            raise Exception('Page rendering failed')
+            raise ImageConversionError(f"Failed to render page to image: {e}") from e
 
-
-# Convenience function for simple usage
 def extract_resume_text(file: Union[BytesIO, str], format: str) -> ExtractionResult:
     """
     Convenience function to extract text from resume files.

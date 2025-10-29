@@ -13,4 +13,8 @@ export * from "./parser";
 export * from "./schema";
 
 // Providers
+export * from "./providers/types";
 export * from "./providers";
+
+// Convenience Functions
+export * from "./convenience";
