@@ -20,43 +20,30 @@
 
 ### High-Level Architecture
 
-```
-┌─────────────────┐
-│   Resume File   │
-│  (PDF/DOCX/TXT) │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────────────────┐
-│   Text Extractor (Python)   │
-│  ┌────────┬─────────────┐   │
-│  │pdfminer│  pypdf  OCR │   │
-│  └────────┴─────────────┘   │
-└────────┬────────────────────┘
-         │ text
-         ▼
-┌─────────────────────────────┐
-│   JSON Parser (TypeScript)  │
-│  ┌──────────┬───────────┐   │
-│  │ OpenAI   │ Anthropic │   │
-│  └──────────┴───────────┘   │
-│  ┌─────────────────────┐   │
-│  │    Zod Schemas      │   │
-│  └─────────────────────┘   │
-└────────┬────────────────────┘
-         │ structured JSON
-         ▼
-┌─────────────────────────────┐
-│  Scorer (TypeScript)        │
-│  ┌──────────────────────┐   │
-│  │ Logarithmic Score    │   │
-│  │ Capped Factor        │   │
-│  │ Weighted Aggregation │   │
-│  └──────────────────────┘   │
-└────────┬────────────────────┘
-         │
-         ▼
-    Final Score (0-100)
+```mermaid
+flowchart TD
+    A["Resume File<br/>(PDF/DOCX/TXT)"] --> B["Text Extractor (Python)"]
+
+    subgraph B["Text Extractor (Python)"]
+        B1["pdfminer | pypdf | OCR"]
+    end
+
+    B -->|text| C["JSON Parser (TypeScript)"]
+
+    subgraph C["JSON Parser (TypeScript)"]
+        C1["OpenAI | Anthropic"]
+        C2["Zod Schemas"]
+    end
+
+    C -->|structured JSON| D["Scorer (TypeScript)"]
+
+    subgraph D["Scorer (TypeScript)"]
+        D1["Logarithmic Score"]
+        D2["Capped Factor"]
+        D3["Weighted Aggregation"]
+    end
+
+    D --> E["Final Score (0-100)"]
 ```
 
 ### Design Principles
