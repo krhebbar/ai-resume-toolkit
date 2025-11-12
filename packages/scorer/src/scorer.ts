@@ -9,6 +9,7 @@ import {
   ScoringConfig,
   ScoredElement,
   SkillsScore,
+  ScorableData,
 } from "./types";
 import { getScore, getSkillScore, getWeightedScore } from "./algorithms";
 

@@ -19,6 +19,9 @@ import fitz  # PyMuPDF
 from typing import Dict, Optional, List, Union
 from io import BytesIO
 import zipfile
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ExtractionError(Exception):
     """Base class for extraction errors."""
@@ -45,6 +48,12 @@ class SupportedFormats:
     PDF = 'PDF'
     DOCX = 'DOCX'
     TEXT = 'TEXT'
+
+
+# Configuration constants
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB limit
+DEFAULT_MIN_TEXT_THRESHOLD = 500  # Characters needed before triggering OCR
+PDF_RENDER_ZOOM = 2  # Resolution multiplier for high-quality OCR (2x = 144 DPI from 72 DPI base)
 
 
 class ExtractionResult:
@@ -114,7 +123,7 @@ class ResumeExtractor:
         min_text_threshold: Minimum characters before triggering OCR fallback (default: 500)
     """
 
-    def __init__(self, file: Union[BytesIO, str], format: str, min_text_threshold: int = 500):
+    def __init__(self, file: Union[BytesIO, str], format: str, min_text_threshold: int = DEFAULT_MIN_TEXT_THRESHOLD):
         """
         Initialize the ResumeExtractor.
 
@@ -122,7 +131,22 @@ class ResumeExtractor:
             file: File path (str) or file-like object (BytesIO)
             format: File format (use SupportedFormats constants)
             min_text_threshold: Minimum text length before OCR fallback
+
+        Raises:
+            ValueError: If file size exceeds MAX_FILE_SIZE
         """
+        # Validate file size
+        if isinstance(file, BytesIO):
+            current_pos = file.tell()
+            file.seek(0, 2)  # Seek to end
+            size = file.tell()
+            file.seek(current_pos)  # Restore position
+
+            if size > MAX_FILE_SIZE:
+                raise ValueError(
+                    f"File size ({size:,} bytes) exceeds maximum allowed size ({MAX_FILE_SIZE:,} bytes)"
+                )
+
         self.file = file
         self.format = format
         self.min_text_threshold = min_text_threshold
@@ -162,9 +186,9 @@ class ResumeExtractor:
             # Tier 1: Try pdfminer.six
             text = clean_text(extract_text(self.file))
         except PDFSyntaxError as e:
-            print(f"pdfminer.six failed: {e}. Falling back to pypdf.")
+            logger.warning(f"pdfminer.six failed: {e}. Falling back to pypdf.")
         except Exception as e:
-            print(f"An unexpected error occurred with pdfminer.six: {e}. Falling back to pypdf.")
+            logger.warning(f"An unexpected error occurred with pdfminer.six: {e}. Falling back to pypdf.")
 
         try:
             # Tier 2: Fallback to pypdf if pdfminer returns empty
@@ -182,7 +206,7 @@ class ResumeExtractor:
         try:
             # Tier 3: If still minimal text, assume image-based PDF
             if not text or len(text.strip()) < self.min_text_threshold:
-                print(f'Text extraction yielded {len(text) if text else 0} chars. Extracting images for OCR.')
+                logger.info(f'Text extraction yielded {len(text) if text else 0} chars. Extracting images for OCR.')
                 images = self._pdf_to_images()
                 text = None # Clear text if we are returning images
         except Exception as e:
@@ -284,8 +308,7 @@ class ResumeExtractor:
             Base64-encoded image string
         """
         try:
-            zoom = 2
-            mat = fitz.Matrix(zoom, zoom)
+            mat = fitz.Matrix(PDF_RENDER_ZOOM, PDF_RENDER_ZOOM)
             pix_bytes = page.get_pixmap(matrix=mat).tobytes()
             return base64.b64encode(pix_bytes).decode('utf-8')
         except Exception as e:
