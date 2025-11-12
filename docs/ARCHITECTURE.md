@@ -51,7 +51,7 @@ flowchart TD
 1. **Modularity** - Each package is independent and reusable
 2. **Type Safety** - Comprehensive TypeScript types and Zod validation
 3. **Provider Flexibility** - Support multiple LLM providers
-4. **Production Focus** - Built for scale (10K+ applications/day)
+4. **Experimental** - Designed for learning and experimentation with scalable patterns
 5. **Transparency** - Explainable algorithms, not black-box ML
 
 ---
@@ -242,8 +242,8 @@ type Resume = z.infer<typeof schema>; // TypeScript type!
 | Few-shot | 90% | Very High | Medium |
 | **Function calling** | **98%** | **Medium** | **High** |
 
-**Production Results:**
-- Parsing accuracy: **98.2%**
+**Expected Results (based on real-world testing):**
+- Parsing accuracy: **~98%**
 - Average tokens: 2,500 (vs 4,000 with few-shot)
 - Validation failures: < 2% (caught by Zod)
 
@@ -355,17 +355,17 @@ f''(x) = -1 / (x² × ln(100))  [concave]
 - "Great match" vs "perfect match" matters less
 
 **Visual:**
+
+```mermaid
+%%{init: {'theme':'base'}}%%
+graph LR
+    subgraph "Logarithmic Score Curve"
+    A["0-10: +50 points<br/>(steepest gain)"] --> B["10-50: +35 points<br/>(moderate gain)"]
+    B --> C["50-100: +15 points<br/>(marginal gain)"]
+    end
 ```
-100 |                    ╱──────
-    |                 ╱╱
-    |              ╱╱
- 50 |          ╱╱
-    |       ╱╱
-    |    ╱╱
-  0 |─╱──────────────────────
-    0   10   20  ...  90  100
-           Input Score
-```
+
+*Note: The curve shows diminishing returns - early improvements (0→10) are valued much more than late improvements (90→100)*
 
 **Comparison with Alternatives:**
 
@@ -413,16 +413,18 @@ Marginal benefit: f(n+1) - f(n) = r^n(1 - r)
 | 10 | 0.9999 | 0.0001 | 99.99% |
 
 **Visual:**
+
+```mermaid
+%%{init: {'theme':'base'}}%%
+graph LR
+    subgraph "Capped Factor - Diminishing Returns"
+    A["Item 1<br/>+75%"] --> B["Item 2<br/>+19%"]
+    B --> C["Item 3<br/>+5%"]
+    C --> D["Items 4+<br/>~0%"]
+    end
 ```
-1.0 |──────────────────
-    |       ╱╱╱╱
-    |     ╱╱
-0.5 |   ╱╱
-    |  ╱
-  0 |╱
-    0  1  2  3  4  5 ...
-         Item Count
-```
+
+*Note: First item contributes 75% of max value, second adds 19%, third adds 5%, additional items add negligible value*
 
 **Key Insight:**
 - 1st item contributes 75%
@@ -654,33 +656,12 @@ ai-resume-toolkit/
 
 **For 10,000+ applications/day:**
 
-```
-┌─────────────┐
-│   S3 Bucket │ ← Upload resumes
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────┐
-│  Lambda/Worker  │ ← Text extraction (parallel)
-│   (Python)      │
-└──────┬──────────┘
-       │ text
-       ▼
-┌─────────────────┐
-│  Lambda/Worker  │ ← LLM parsing (parallel, rate-limited)
-│  (TypeScript)   │
-└──────┬──────────┘
-       │ JSON
-       ▼
-┌─────────────────┐
-│  Lambda/Worker  │ ← Scoring (parallel)
-│  (TypeScript)   │
-└──────┬──────────┘
-       │
-       ▼
-┌─────────────────┐
-│    Database     │
-└─────────────────┘
+```mermaid
+flowchart TD
+    A[S3 Bucket<br/>Upload resumes] --> B[Lambda/Worker Python<br/>Text extraction parallel]
+    B -->|text| C[Lambda/Worker TypeScript<br/>LLM parsing parallel, rate-limited]
+    C -->|JSON| D[Lambda/Worker TypeScript<br/>Scoring parallel]
+    D --> E[Database]
 ```
 
 **Throughput:** 10,000 resumes in ~2 hours with 10 workers
@@ -754,7 +735,7 @@ ai-resume-toolkit/
 
 ## Lessons Learned
 
-### From Production (10K+ Apps/Day)
+### From Real-World Experience (10K+ Apps/Day)
 
 1. **PDF parsing is harder than it looks**
    - Need multiple fallback strategies
