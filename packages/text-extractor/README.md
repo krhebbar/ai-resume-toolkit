@@ -7,7 +7,7 @@ Multi-format resume text extraction with intelligent OCR fallback strategies.
 - **Multiple Format Support**: PDF, DOCX, and plain text
 - **Intelligent Fallback**: 3-tier extraction strategy for PDFs
 - **OCR-Ready**: Automatic image extraction for scanned/image-based PDFs
-- **Production-Grade**: Clean API, comprehensive error handling
+- **Experimental**: Clean API with comprehensive error handling for learning and research
 - **Type-Safe**: Full type hints for Python 3.8+
 
 ## Installation

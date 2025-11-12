@@ -80,7 +80,15 @@ export class OpenAIProvider implements LLMProvider {
         throw new Error("No function call returned from OpenAI");
       }
 
-      const parsedData = JSON.parse(functionCall.arguments);
+      let parsedData;
+      try {
+        parsedData = JSON.parse(functionCall.arguments);
+      } catch (parseError) {
+        if (parseError instanceof SyntaxError) {
+          throw new Error(`Invalid JSON from OpenAI: ${parseError.message}`);
+        }
+        throw parseError;
+      }
 
       // Validate against schema
       const validatedData = schema.parse(parsedData);

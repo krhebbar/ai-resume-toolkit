@@ -1,8 +1,8 @@
 # AI Resume Toolkit
 
-**Complete, production-grade toolkit for AI-powered resume processing and candidate matching.**
+**Experimental open-source toolkit for AI-powered resume processing and candidate matching.**
 
-Extract, parse, and score resumes using LLMs and sophisticated algorithms. Built from real production experience processing **10,000+ applications/day**.
+Extract, parse, and score resumes using LLMs and sophisticated algorithms. Built from real-world recruiting experience processing **10,000+ applications/day**.
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
@@ -16,7 +16,7 @@ Extract, parse, and score resumes using LLMs and sophisticated algorithms. Built
 - **🤖 LLM-Based Parsing** - Structured JSON extraction using OpenAI/Anthropic with type-safe schemas
 - **🎯 Sophisticated Scoring** - Logarithmic algorithms with diminishing returns (prevents keyword stuffing)
 - **🔌 Multi-Provider Support** - OpenAI, Anthropic, or bring your own LLM
-- **📊 Production-Grade** - Battle-tested algorithms from systems handling 1,000+ interviews/month
+- **📊 Experimental** - Algorithms inspired by real-world systems handling 1,000+ interviews/month
 - **🎨 Type-Safe** - Full TypeScript support with comprehensive type definitions
 - **📦 Modular** - Use packages independently or together
 
@@ -176,14 +176,11 @@ See [ARCHITECTURE.md](./docs/ARCHITECTURE.md) for mathematical proofs.
 
 ### Text Extraction Strategy
 
-```
-PDF Input
-  ↓
-pdfminer.six (Primary)
-  ↓ [if empty]
-pypdf (Fallback)
-  ↓ [if < 500 chars]
-PyMuPDF → Images (OCR Path)
+```mermaid
+flowchart TD
+    A[PDF Input] --> B[pdfminer.six Primary]
+    B -->|if empty| C[pypdf Fallback]
+    C -->|if &lt; 500 chars| D[PyMuPDF → Images OCR Path]
 ```
 
 **Result:** 99.8% text extraction success rate across all PDF types
@@ -206,16 +203,18 @@ class CustomProvider implements LLMProvider { ... }
 
 ### Scoring Pipeline
 
-```
-Resume Elements → Rate vs Job → Calculate Scores → Weighted Total
-                   (LLM/Rules)   (Algorithms)      (Config Weights)
+```mermaid
+flowchart LR
+    A[Resume Elements] --> B[Rate vs Job<br/>LLM/Rules]
+    B --> C[Calculate Scores<br/>Algorithms]
+    C --> D[Weighted Total<br/>Config Weights]
 ```
 
 ---
 
-## 📊 Production Metrics
+## 📊 Performance Metrics
 
-**Battle-tested in production systems:**
+**Inspired by real-world recruiting systems:**
 
 | Metric | Value |
 |--------|-------|
@@ -388,7 +387,7 @@ function getCappedFactor(count: number, rFactor: number): number {
 | PDF edge cases | ❌ Miss many | ✅ Handled |
 | Algorithm design | ⚠️ Linear (naive) | ✅ Logarithmic (optimal) |
 | LLM integration | ⚠️ One provider | ✅ Multi-provider |
-| Battle-tested | ❌ No | ✅ 10K+ apps/day |
+| Real-world tested | ❌ No | ✅ Patterns from 10K+ apps/day |
 
 ---
 
@@ -422,7 +421,7 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-Built from real production experience in recruiting systems handling:
+Built from real-world experience in recruiting systems handling:
 - 10,000+ applications/day
 - 1,000+ interviews/month
 - Multi-platform ATS integrations
